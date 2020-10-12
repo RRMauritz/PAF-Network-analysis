@@ -5,27 +5,33 @@ from collections import Counter
 from scipy.stats import linregress
 from ProjectPAF.PAF_Generation import ba_graph_oi, ba_graph, paf_graph
 
-n = 1000
-m = 22
-m0 = 30
+n = 30
+m = 3
+m0 = 5
 
 # G = ba_graph(n, m)
 # G = ba_graph_oi(n, m, m0)
 G = paf_graph(n, m, m0)
 
-degrees = Counter(dict(G.degree()).values())
-deg_k = list(degrees.keys())
-deg_v = list(degrees.values())
 
-# nx.draw(G, with_labels=True)
+degrees = dict(G.degree()).values()
 
+print(degrees)
 
-slope, intercept, _, _, _ = linregress(np.log10(deg_k), np.log10(deg_v))
+deg_count = Counter(degrees)
+deg_k = list(deg_count.keys())
+deg_v = list(deg_count.values())
 
-xfid = np.linspace(np.log10(min(deg_k)), np.log10(max(deg_k)))
+nx.draw(G, with_labels=True, node_color=list(degrees), cmap=plt.cm.Reds_r)
 
-fig, axs = plt.subplots(2)
-axs[0].bar(deg_k, deg_v)
-axs[1].plot(np.log10(deg_k), np.log10(deg_v), 'k.')
-axs[1].plot(xfid, xfid * slope + intercept)
+# slope, intercept, _, _, _ = linregress(np.log10(deg_k), np.log10(deg_v))
+#
+# xfid = np.linspace(np.log10(min(deg_k)), np.log10(max(deg_k)))
+#
+# fig, axs = plt.subplots(2)
+# axs[0].bar(deg_k, deg_v)
+# axs[0].set_xlim([0, 100])
+# axs[1].plot(np.log10(deg_k), np.log10(deg_v), 'k.')
+# axs[1].plot(xfid, xfid * slope + intercept)
+
 plt.show()

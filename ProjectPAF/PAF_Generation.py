@@ -101,7 +101,8 @@ def paf_graph(n, m, m0):
     # Note that by doing it this way, a higher fitness value means less quality (as we divide by it)
     sc_deg = [deg[i] / fitnesses[i] for i in range(len(deg))]
     # Scale it another time to make it a prob. distribution
-    sc_deg = [e / sum(sc_deg) for e in sc_deg]
+    sum_sc_deg = sum(sc_deg)
+    sc_deg = [e / sum_sc_deg for e in sc_deg]
     # Sample m target nodes (without replacement) from the existing vertices with sc_deg as distribution
     targets = np.random.choice(np.arange(m0), p=sc_deg, size=m, replace=False)
     # The new entering vertex, starting with label m0 (as Python is 0-based)
@@ -116,8 +117,8 @@ def paf_graph(n, m, m0):
         # Add m for the degree of the new node, this can simply be done by appending m to the degree list
         sc_deg.append(m / fitnesses[source])
         # Scale the degrees again to make it a prob. distribution. (here we can maybe improve)
-        sum_sc_deq = sum(sc_deg)
-        sc_deg = [e / sum_sc_deq for e in sc_deg]
+        sum_sc_deg = sum(sc_deg)
+        sc_deg = [e / sum_sc_deg for e in sc_deg]
         # Sample m target nodes from the existing vertices with sc_deg as distribution
         targets = np.random.choice(np.arange(len(sc_deg)), p=sc_deg, size=m, replace=False)
         source += 1
