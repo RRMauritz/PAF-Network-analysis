@@ -5,13 +5,13 @@ from collections import Counter
 from scipy.stats import linregress
 from ProjectPAF.PAF_Generation import ba_graph_oi, ba_graph, paf_graph
 
-n = 100000
-m = 50
-m0 = 100
+n = 1000
+m = 22
+m0 = 30
 
 # G = ba_graph(n, m)
-G = ba_graph_oi(n, m, m0)
-#G = paf_graph(n, m, m0)
+# G = ba_graph_oi(n, m, m0)
+G = paf_graph(n, m, m0)
 
 degrees = Counter(dict(G.degree()).values())
 deg_k = list(degrees.keys())

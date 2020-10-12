@@ -89,33 +89,36 @@ def paf_graph(n, m, m0):
     :param m = the number of vertices each new vertex connects to
     :param m0 = the number of vertices that we start the network with
     """
-    # Start with a complete graph
+
+    # Start with a complete graph #TODO: this is not necessary, a random connected graph is maybe better
     G = nx.complete_graph(m0)
     # Sample n fitness parameters corresponding to the (future) vertices
     fitnesses = np.random.binomial(10, 0.3, size=n) + 1
 
-    # list of degrees where deg[i] corresponds to the degree of vertex i, i = 0,...,n-1
+    # list of degrees where deg[i] corresponds to the degree of vertex i, i = 0, 1, ..., m0 for now
     deg = list(dict(G.degree()).values())
     # The scaled degrees that we use as distribution to sample targets from the existing nodes
+    # Note that by doing it this way, a higher fitness value means less quality (as we divide by it)
     sc_deg = [deg[i] / fitnesses[i] for i in range(len(deg))]
     # Scale it another time to make it a prob. distribution
     sc_deg = [e / sum(sc_deg) for e in sc_deg]
-    # Sample m target nodes from the existing vertices with sc_deg as distribution
+    # Sample m target nodes (without replacement) from the existing vertices with sc_deg as distribution
     targets = np.random.choice(np.arange(m0), p=sc_deg, size=m, replace=False)
     # The new entering vertex, starting with label m0 (as Python is 0-based)
     source = m0
     while source < n:
+        # Add edges from the source to the the m targets
         G.add_edges_from(zip([source] * m, targets))
-        # Update the degrees:
-        # Add 1 to the degree of the targets
+        # Update the degrees (2 steps):
+        # Add 1 to the degree of the targets and rescale
         for v in range(m):
-            deg[targets[v]] += 1
-        # Add m for the degree of the new node
-        deg.append(m)
-        # Scale the degrees again (here we can maybe improve as it may be redundant to rescale everything again)
-        sc_deg = [deg[i] / fitnesses[i] for i in range(len(deg))]
-        sc_deg = [e / sum(sc_deg) for e in sc_deg]
+            sc_deg[targets[v]] += 1 / fitnesses[targets[v]]
+        # Add m for the degree of the new node, this can simply be done by appending m to the degree list
+        sc_deg.append(m / fitnesses[source])
+        # Scale the degrees again to make it a prob. distribution. (here we can maybe improve)
+        sum_sc_deq = sum(sc_deg)
+        sc_deg = [e / sum_sc_deq for e in sc_deg]
         # Sample m target nodes from the existing vertices with sc_deg as distribution
-        targets = np.random.choice(np.arange(len(deg)), p=sc_deg, size=m, replace=False)
+        targets = np.random.choice(np.arange(len(sc_deg)), p=sc_deg, size=m, replace=False)
         source += 1
     return G
