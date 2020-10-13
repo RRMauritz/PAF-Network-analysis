@@ -12,7 +12,7 @@ Includes functions for reading and writing graphs, in a very simple readable for
 import sys
 from typing import IO, Tuple, List, Union
 
-from Graph_class import Graph, Edge
+from Others.Graph_class import Graph, Edge
 
 DEFAULT_COLOR_SCHEME = "red"
 NUM_COLORS = 12

@@ -122,4 +122,4 @@ def paf_graph(n, m, m0):
         # Sample m target nodes from the existing vertices with sc_deg as distribution
         targets = np.random.choice(np.arange(len(sc_deg)), p=sc_deg, size=m, replace=False)
         source += 1
-    return G
+    return G, fitnesses

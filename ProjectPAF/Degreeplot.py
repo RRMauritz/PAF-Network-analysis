@@ -5,24 +5,22 @@ from collections import Counter
 from scipy.stats import linregress
 from ProjectPAF.PAF_Generation import ba_graph_oi, ba_graph, paf_graph
 
-n = 30
-m = 3
-m0 = 5
+n = 70
+m = 7
+m0 = 15
 
 # G = ba_graph(n, m)
 # G = ba_graph_oi(n, m, m0)
-G = paf_graph(n, m, m0)
+G, fitnesses = paf_graph(n, m, m0)
 
-
-degrees = dict(G.degree()).values()
-
-print(degrees)
+degrees = list(dict(G.degree()).values())  # degree values for all vertices
 
 deg_count = Counter(degrees)
-deg_k = list(deg_count.keys())
-deg_v = list(deg_count.values())
+deg_k = list(deg_count.keys())  # unique degrees
+deg_v = list(deg_count.values())  # number of occurences of each unique degree
 
-nx.draw(G, with_labels=True, node_color=list(degrees), cmap=plt.cm.Reds_r)
+labeldict = dict(zip(range(len(fitnesses)), fitnesses))
+nx.draw(G, node_color=degrees, labels=labeldict, with_labels=True, node_size=600, cmap=plt.cm.Reds_r)
 
 # slope, intercept, _, _, _ = linregress(np.log10(deg_k), np.log10(deg_v))
 #
