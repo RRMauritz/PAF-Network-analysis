@@ -1,7 +1,5 @@
 import networkx as nx
 import numpy as np
-import matplotlib.pyplot as plt
-from collections import Counter
 from networkx.utils import py_random_state
 
 
@@ -20,41 +18,35 @@ def _random_subset(seq, m, rng):
     return targets
 
 
-@py_random_state(3)
-def ba_graph_oi(n, m, m0, seed=None):
+@py_random_state(2)
+def ba_graph_oi(n, m, seed=None):
     """
-    OWN IMPLEMENTATION
-    Returns a random graph according to the Barabási–Albert preferential
-    Attachment model.
-    :param n: the number of nodes that we end with
-    :param m: the number of edges with which each incoming node is attached to the existing nodes
-    Because each connection is to a different node (sampling without replacement), we could also say that m is the
-    number of existing nodes to which a new vertex is connected
-    :param m0: the number of nodes that we start the network with
-    We should have that m<m0
+    OWN IMPLEMENTATION: use model from the CN book, page 256 (Bollobás & Riordan 2004)
+    Here we use that delta = 0 (the Albert Barabási model)
+    :param n = the number of edges that we end the graph with (equivalent is the time when we end the process)
+    :param m = the number of links each new vertex makes with the network
+    Note: this algorithm allows for self-loops and multi-edges!
     """
-    if not m <= m0:
-        raise ValueError("m should be less or equal to m0!")
 
-    # Add m initial nodes
-    G = nx.complete_graph(m0)  # TODO: can we create random non-complete graphs?
-    # Target nodes for new edges, initialized to m random nodes from the first m0 nodes
-    targets = list(np.random.choice(m0, m, replace=False))
-    # List of existing nodes, with nodes repeated by the number of it's degree
-    degrees = list(dict(G.degree()).values())
-    repeated_nodes = list(np.repeat(G.nodes, degrees))
-    # Start adding the other n-m0 nodes. The first node is m0 (this works because of 0-based ness)
-    source = m0
+    # Start with 1 node, m self-loops, a self-loop adds 2 to its degree
+    G = nx.MultiGraph()
+    G.add_edges_from(zip([0] * m, [0] * m))
+    # Add the first node (label = 0) 2*m times to the repeated-degree list:
+    rep_nodes = [0] * m * 2
+    # Now we start with sampling m targets, we do this with intermediate updating of the degrees
+    source = 1
+
     while source < n:
-        # Add edges to m nodes from the source.
-        G.add_edges_from(zip([source] * m, targets))
-        # Add one node to the list for each new edge just created.
-        repeated_nodes.extend(targets)
-        # And the new node "source" has m edges to add to the list.
-        repeated_nodes.extend([source] * m)
-        # Now choose m unique nodes from the existing nodes
-        # Pick uniformly from repeated_nodes (preferential attachement)
-        targets = _random_subset(repeated_nodes, m, seed)
+        for e in range(m):
+            # this list adds the source each time when a new links is created -> D_(t+1)(e-1, t)+1 for itself
+            rep_nodes_inbetw = rep_nodes[:]  # make hardcopy
+            rep_nodes_inbetw.append(source)
+            # Sample a target vertex from the rep_nodes_inbetw list that contains the extra source vertex
+            target = list(_random_subset(rep_nodes_inbetw, 1, seed))[0]  # TODO: check if this can be more efficient
+            # Add an edge between the source and the target
+            G.add_edges_from([(source, target)])
+            # Add the source and vertex to the rep_nodes list as both their degree has increased by 1
+            rep_nodes.extend([source, target])
         source += 1
     return G
 
@@ -64,6 +56,7 @@ def ba_graph(n, m, seed=None):
     """"
     Networkx implementation of Albert Barabási algorithm
     """
+    # Start with graph of m nodes, 0 edges
     G = nx.empty_graph(m)
     targets = list(range(m))
     repeated_nodes = []
@@ -99,7 +92,8 @@ def paf_graph(n, m, m0):
     deg = list(dict(G.degree()).values())
     # The scaled degrees that we use as distribution to sample targets from the existing nodes
     # Note that by doing it this way, a higher fitness value means less quality (as we divide by it)
-    sc_deg = [deg[i] / fitnesses[i] for i in range(len(deg))]
+    sc_deg = [deg[i] / fitnesses[i] for i in
+              range(len(deg))]  # TODO: multiply so that higher fitness -> more attractive
     # Scale it another time to make it a prob. distribution
     sum_sc_deg = sum(sc_deg)
     sc_deg = [e / sum_sc_deg for e in sc_deg]

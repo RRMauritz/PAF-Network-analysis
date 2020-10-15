@@ -1,7 +1,15 @@
 import matplotlib.pyplot as plt
-from ProjectPAF.PAF_Generation import paf_graph
+from ProjectPAF.PAF_Generation import *
 import numpy as np
+import networkx as nx
 
-fitnesses = np.random.binomial(10, 0.3, size=5) + 1
+m = 3
 
-print(fitnesses)
+G = ba_graph_oi(10, m)
+
+print(G.degree)
+
+nx.draw(G)
+plt.show()
+
+
