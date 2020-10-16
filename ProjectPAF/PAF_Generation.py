@@ -25,7 +25,10 @@ def ba_graph_oi(n, m, seed=None):
     Here we use that delta = 0 (the Albert Barabási model)
     :param n = the number of edges that we end the graph with (equivalent is the time when we end the process)
     :param m = the number of links each new vertex makes with the network
-    Note: this algorithm allows for self-loops and multi-edges!
+    Note 1: this algorithm allows for self-loops and multi-edges!
+    Note 2: instead of using a probability vector, we use an occurrence list. This means that if we have two particles
+    where particle 1 has twice as high probability to be drawn than particle 2 (p = [2/3, 1/3]), particle 1 will occur
+    twice as often in this occurrence list than particle 2
     """
 
     # Start with 1 node, m self-loops, a self-loop adds 2 to its degree
@@ -37,8 +40,9 @@ def ba_graph_oi(n, m, seed=None):
     source = 1
 
     while source < n:
+        # Loop over the m targets in each time step (intermediate scaling)
         for e in range(m):
-            # this list adds the source each time when a new links is created -> D_(t+1)(e-1, t)+1 for itself
+            # this list adds the source each time new links is created -> p = D_(t+1)(e-1, t)+1 for connecting to itself
             rep_nodes_inbetw = rep_nodes[:]  # make hardcopy
             rep_nodes_inbetw.append(source)
             # Sample a target vertex from the rep_nodes_inbetw list that contains the extra source vertex
