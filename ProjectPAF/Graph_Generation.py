@@ -1,6 +1,7 @@
 import networkx as nx
 import numpy as np
 from networkx.utils import py_random_state
+from scipy.stats import binom
 
 
 def _random_subset(seq, m, rng):
@@ -89,8 +90,9 @@ def paf_graph(n):
     G = nx.MultiGraph()
     G.add_edges_from(zip([0], [0]))
     # Sample n fitness parameters corresponding to the (future) vertices
-    fitnesses = np.random.binomial(10, 0.3, size=n) + 1 # TODO
-
+    fitnesses = np.random.binomial(10, 0.3, size=n) + 1  # TODO: is this +1 the problem for difference comptetion?
+    rv = binom(10, 0.3)
+    Q = rv.pmf([i for i in range(10)])
     # list of degrees,
     deg = list(dict(G.degree()).values())
     # The scaled degrees that we use as distribution to sample targets from the existing nodes
@@ -98,19 +100,22 @@ def paf_graph(n):
     # Scale it another time to make it a prob. distribution
     sum_sc_deg = sum(sc_deg)
     sc_deg = [e / sum_sc_deg for e in sc_deg]
+    print(sc_deg)
     # We start with the target being vertex 0
     target = 0
     # The new entering vertex, starting with label m0 (as Python is 0-based)
     source = 1
     while source < n:
+        print(target, fitnesses[target])
         # Add edges from the source to the the m targets
         G.add_edge(source, target)
-        sc_deg[target] += 1 / fitnesses[target]
-        sc_deg.append(1 / fitnesses[source])
+        sc_deg[target] += 1 * fitnesses[target]
+        sc_deg.append(1 * fitnesses[source])
         # Scale the degrees again to make it a prob. distribution. (here we can maybe improve)
         sum_sc_deg = sum(sc_deg)
         sc_deg = [e / sum_sc_deg for e in sc_deg]
+        print(sc_deg)
         # Sample m target nodes from the existing vertices with sc_deg as distribution
         target = np.random.choice(np.arange(len(sc_deg)), p=sc_deg, size=1, replace=False)[0]
         source += 1
-    return G, fitnesses
+    return G, fitnesses, Q
