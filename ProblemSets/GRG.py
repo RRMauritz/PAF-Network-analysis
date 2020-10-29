@@ -90,8 +90,9 @@ for ax in axs.flat:
 
 # Question 4:
 deglist = sim_GRG(n, w, m)
+# Sort the list according to w
 deglist_sorted = deglist[:, np.argsort(w)]
-
+# Plots
 fig2, ax = plt.subplots()
 ax.plot(np.arange(n), np.sort(w), 'bo', label='vertex weight')
 label_added = False

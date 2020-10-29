@@ -1,18 +1,16 @@
-import networkx as nx
-from networkx.drawing.nx_agraph import to_agraph
+import numpy as np
 
-# define the graph as per your question
-G = nx.MultiDiGraph([(1, 2), (1, 1), (1, 2), (2, 3), (3, 4), (2, 4),
-                     (1, 2), (1, 2), (1, 2), (2, 3), (3, 4), (2, 4)])
+exclude = {'Giorgio': [3, 12, 4], 'Janet': [14, 15, 16], 'Huan': [2, 13, 17], 'Jop': [8, 1, 18], 'Rutger': [6, 9, 10],
+           'Thomas': [11, 5, 7]}
 
-# add graphviz layout options (see https://stackoverflow.com/a/39662097)
-G.graph['edge'] = {'arrowsize': '0.6', 'splines': 'curved'}
-G.graph['graph'] = {'scale': '3'}
+available_problems = [i for i in range(1, 19)]
 
-# adding attributes to edges in multigraphs is more complicated but see
-# https://stackoverflow.com/a/26694158
-G[1][1][0]['color'] = 'red'
+for student in exclude:
+    sample_set = list(set(available_problems) - set(exclude[student]))
+    print(sample_set)
+    review = np.random.choice(sample_set,3,False)
+    print(student, ' reviews ', review)
+    available_problems = list(set(available_problems)-set(review))
+    print(available_problems)
 
-A = to_agraph(G)
-A.layout('dot')
-A.draw('multi.png')
+

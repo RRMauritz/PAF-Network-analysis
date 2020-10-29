@@ -36,7 +36,7 @@ def ba_graph_oi(n, m, seed=None):
     G.add_edges_from(zip([0] * m, [0] * m))
     # Add the first node (label = 0) 2*m times to the repeated-degree list:
     rep_nodes = [0] * m * 2
-    # Now we start with sampling m targets, we do this with intermediate updating of the degrees
+    # Set the source to 1 as we only have one vertex yet
     source = 1
 
     while source < n:
@@ -79,7 +79,7 @@ def ba_graph(n, m, seed=None):
     return G
 
 
-def paf_graph(n, m, m0):
+def paf_graph(n):
     """"
     Implementation of the Albert Barabási graph with fitness
     :param n = the total vertices after the network simulation is over
@@ -87,22 +87,21 @@ def paf_graph(n, m, m0):
     :param m0 = the number of vertices that we start the network with
     """
 
-    # Start with a complete graph #TODO: this is not necessary, a random connected graph is maybe better
-    G = nx.complete_graph(m0)
+    # Start with a single vertex and self-loop on it
+    G = nx.MultiGraph()
+    G.add_edges_from(zip([0], [0]))
     # Sample n fitness parameters corresponding to the (future) vertices
     fitnesses = np.random.binomial(10, 0.3, size=n) + 1
 
-    # list of degrees where deg[i] corresponds to the degree of vertex i, i = 0, 1, ..., m0 for now
+    # list of degrees,
     deg = list(dict(G.degree()).values())
     # The scaled degrees that we use as distribution to sample targets from the existing nodes
-    # Note that by doing it this way, a higher fitness value means less quality (as we divide by it)
-    sc_deg = [deg[i] / fitnesses[i] for i in
-              range(len(deg))]  # TODO: multiply so that higher fitness -> more attractive
+    sc_deg = [deg[0] * fitnesses[0]]  #
     # Scale it another time to make it a prob. distribution
     sum_sc_deg = sum(sc_deg)
     sc_deg = [e / sum_sc_deg for e in sc_deg]
-    # Sample m target nodes (without replacement) from the existing vertices with sc_deg as distribution
-    targets = np.random.choice(np.arange(m0), p=sc_deg, size=m, replace=False)
+    # Sample a target node from the existing vertices with sc_deg as distribution
+    targets = np.random.choice(np.arange(m0), p=sc_deg, size=m, replace=False) #TODO: continue here -> target should also be itself
     # The new entering vertex, starting with label m0 (as Python is 0-based)
     source = m0
     while source < n:
