@@ -83,40 +83,34 @@ def paf_graph(n):
     """"
     Implementation of the Albert Barabási graph with fitness
     :param n = the total vertices after the network simulation is over
-    :param m = the number of vertices each new vertex connects to
-    :param m0 = the number of vertices that we start the network with
     """
 
     # Start with a single vertex and self-loop on it
     G = nx.MultiGraph()
     G.add_edges_from(zip([0], [0]))
     # Sample n fitness parameters corresponding to the (future) vertices
-    fitnesses = np.random.binomial(10, 0.3, size=n) + 1
+    fitnesses = np.random.binomial(10, 0.3, size=n) + 1 # TODO
 
     # list of degrees,
     deg = list(dict(G.degree()).values())
     # The scaled degrees that we use as distribution to sample targets from the existing nodes
-    sc_deg = [deg[0] * fitnesses[0]]  #
+    sc_deg = [deg[0] * fitnesses[0]]
     # Scale it another time to make it a prob. distribution
     sum_sc_deg = sum(sc_deg)
     sc_deg = [e / sum_sc_deg for e in sc_deg]
-    # Sample a target node from the existing vertices with sc_deg as distribution
-    targets = np.random.choice(np.arange(m0), p=sc_deg, size=m, replace=False) #TODO: continue here -> target should also be itself
+    # We start with the target being vertex 0
+    target = 0
     # The new entering vertex, starting with label m0 (as Python is 0-based)
-    source = m0
+    source = 1
     while source < n:
         # Add edges from the source to the the m targets
-        G.add_edges_from(zip([source] * m, targets))
-        # Update the degrees (2 steps):
-        # Add 1 to the degree of the targets and rescale
-        for v in range(m):
-            sc_deg[targets[v]] += 1 / fitnesses[targets[v]]
-        # Add m for the degree of the new node, this can simply be done by appending m to the degree list
-        sc_deg.append(m / fitnesses[source])
+        G.add_edge(source, target)
+        sc_deg[target] += 1 / fitnesses[target]
+        sc_deg.append(1 / fitnesses[source])
         # Scale the degrees again to make it a prob. distribution. (here we can maybe improve)
         sum_sc_deg = sum(sc_deg)
         sc_deg = [e / sum_sc_deg for e in sc_deg]
         # Sample m target nodes from the existing vertices with sc_deg as distribution
-        targets = np.random.choice(np.arange(len(sc_deg)), p=sc_deg, size=m, replace=False)
+        target = np.random.choice(np.arange(len(sc_deg)), p=sc_deg, size=1, replace=False)[0]
         source += 1
     return G, fitnesses

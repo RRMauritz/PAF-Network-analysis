@@ -40,9 +40,27 @@ def deg_compare_PA(n, m, plot=False):
     return jsd
 
 
-n = 1000
+def deg_compare_PA_sim(n, m, I):
+    """
+    This method generates a PA(n,m) network and computes the JSD distance between its empirical degree distribution
+    and the known power-law sequence. It does this I times and returns the mean JSD value
+    together with the standard error
+    :param n: the number of elements in the PA network
+    :param m: the number of connections each new vertex makes
+    :param I: the number of simulations
+    """
+    jsd_values = np.zeros(I)
+    for i in range(I):
+        jsd_values[i] = deg_compare_PA(n, m, False)
+    mean_jsd = np.mean(jsd_values)
+    std_jsd = np.std(jsd_values)
+    return mean_jsd, std_jsd
+
+
+n = 10000
 m = 10
+I = 100
 
-jsd = deg_compare_PA(n, m, False)
+mean, std = deg_compare_PA_sim(n, m, 100)
 
-
+print(np.round(mean, 3), np.round(std, 4))
