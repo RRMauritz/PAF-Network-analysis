@@ -94,7 +94,7 @@ def paf_graph(n):
     rv = binom(10, 0.3)
     Q = rv.pmf([i for i in range(11)])
     # list of scaled degrees acting as prob. distr., 2*fitness value of first vertex (self loop -> deg x2)
-    sc_deg = [2*fitnesses[0]]
+    sc_deg = [2 * fitnesses[0]]
     # We start with the target being vertex 0
     target = 0
     # The new entering vertex, starting with label m0 (as Python is 0-based)
