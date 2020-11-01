@@ -3,6 +3,10 @@ from collections import Counter
 import matplotlib.pyplot as plt
 import networkx as nx
 
+from sympy.solvers import solve
+from sympy import symbols, summation, Array
+from scipy.stats import binom
+
 
 def deg_compare_PAF(n, plot=False):
     """
@@ -31,9 +35,17 @@ def deg_compare_PAF(n, plot=False):
     return G, fitness
 
 
-def competition_compare_PAF(n, lamb_not, plot=False):
+def competition_compare_PAF(n, plot=False):
     # Create an instance of the PAF graph
     G, fitness, Q = paf_graph(n)
+
+    # Compute lamb_0 based on Q
+    Q = Array(Q)
+    l, j = symbols('l,j')
+    eq = summation(j * Q[j] / (l - j), (j, 0, 10))
+    lamb_0 = max(solve(eq - 1, l))
+
+    print(lamb_0)
     # For each fitness value, store the total degree
     degrees = list(dict(G.degree()).values())
     fit_deg = {}
@@ -48,10 +60,10 @@ def competition_compare_PAF(n, lamb_not, plot=False):
     link_v = list(fit_deg.values())
     link_k, link_v = zip(*sorted(zip(link_k, link_v)))  # sort ascending
     link_v = [l / n for l in link_v]  # scale by n
-    nu = [lamb_not * Q[j] / (lamb_not - j) for j in range(len(Q))]
+    nu = [lamb_0 * Q[j] / (lamb_0 - j) for j in range(len(Q))]
     # Make a bar plot
     if plot:
-        plt.plot([i for i in range(1,len(Q)+1)], nu, 'ro', label='Nu sequence')
+        plt.plot([i for i in range(1, len(Q) + 1)], nu, 'ro', label='Nu sequence')
         plt.bar(link_k, link_v, label='Scaled link count')
         plt.title('Scaled link count per fitness value')
         plt.xlabel('Fitness value')
@@ -63,19 +75,17 @@ def competition_compare_PAF(n, lamb_not, plot=False):
 def show_PAF(n):
     G, fitness, Q = paf_graph(n)
 
-    s = sum([j*Q[j]/(10.000119-j) for j in range(0,11)])
+    s = sum([j * Q[j] / (10.000119450901292805590966427892 - j) for j in range(0, 11)])
     print(s)
 
     pos = nx.spring_layout(G)
     fitness_labels = dict(zip([i for i in range(len(fitness))], fitness))
     nx.draw(G, pos, node_color=fitness, cmap=plt.cm.Reds_r)
-    nx.draw_networkx_labels(G,pos,fitness_labels)
+    nx.draw_networkx_labels(G, pos, fitness_labels)
     plt.show()
 
 
-n = 1000
-lambnot = 10.000119451
-#lambnot = 9.9
-#show_PAF(n)
-competition_compare_PAF(n,lambnot,plot=True)
+n = 10000
+# show_PAF(n)
+competition_compare_PAF(n, plot=True)
 # deg_compare_PAF(n,plot=True)
