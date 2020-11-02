@@ -8,13 +8,13 @@ from sympy import symbols, summation, Array
 from scipy.stats import binom
 
 
-def deg_compare_PAF(n, plot=False):
+def deg_compare_PAF(n, Q, plot=False):
     """
     Creates a PAF network and computes its degree sequence
     :param n: the number of vertices in the PAF graph
     :param plot: if True, then the degree sequence will be plotted via a bar plot
     """
-    G, fitness, _ = paf_graph(n)
+    G, fitness, _ = paf_graph(n, Q)
 
     degrees = list(dict(G.degree()).values())  # list of degree values for all vertices
     deg_count = Counter(degrees)  # Count each occurrence
@@ -35,17 +35,17 @@ def deg_compare_PAF(n, plot=False):
     return G, fitness
 
 
-def competition_compare_PAF(n, plot=False):
+def competition_compare_PAF(n, Q, plot=False):
     # Create an instance of the PAF graph
-    G, fitness, Q = paf_graph(n)
+    G, fitness = paf_graph(n, Q)
 
     # Compute lamb_0 based on Q
     Q = Array(Q)
-    l, j = symbols('l,j')
-    eq = summation(j * Q[j] / (l - j), (j, 0, 10))
+    l, j = symbols('l,j', real=True)
+    eq = summation(j * Q[j - 1] / (l - j), (j, 1, len(Q)))  # The end term is included in the summation
     lamb_0 = max(solve(eq - 1, l))
+    print("Lambda_0 = ", lamb_0)
 
-    print(lamb_0)
     # For each fitness value, store the total degree
     degrees = list(dict(G.degree()).values())
     fit_deg = {}
@@ -60,7 +60,8 @@ def competition_compare_PAF(n, plot=False):
     link_v = list(fit_deg.values())
     link_k, link_v = zip(*sorted(zip(link_k, link_v)))  # sort ascending
     link_v = [l / n for l in link_v]  # scale by n
-    nu = [lamb_0 * Q[j] / (lamb_0 - j) for j in range(len(Q))]
+    nu = [lamb_0 * Q[j - 1] / (lamb_0 - j) for j in range(1, len(Q) + 1)]
+
     # Make a bar plot
     if plot:
         plt.plot([i for i in range(1, len(Q) + 1)], nu, 'ro', label='Nu sequence')
@@ -72,11 +73,8 @@ def competition_compare_PAF(n, plot=False):
         plt.show()
 
 
-def show_PAF(n):
-    G, fitness, Q = paf_graph(n)
-
-    s = sum([j * Q[j] / (10.000119450901292805590966427892 - j) for j in range(0, 11)])
-    print(s)
+def show_PAF(n, Q):
+    G, fitness = paf_graph(n, Q)
 
     pos = nx.spring_layout(G)
     fitness_labels = dict(zip([i for i in range(len(fitness))], fitness))
@@ -85,7 +83,11 @@ def show_PAF(n):
     plt.show()
 
 
-n = 10000
-# show_PAF(n)
-competition_compare_PAF(n, plot=True)
-# deg_compare_PAF(n,plot=True)
+# ---------------------------------------------------------
+rv = binom(6, 0.3)
+Q = rv.pmf([i for i in range(6)])
+n = 3000
+
+#competition_compare_PAF(n, Q, plot=True)
+# Q = [0.1, 0.3, 0.2, 0.3, 0.1]
+# Q = [0.6, 0.19, 0.21]  # TODO: problems with imaginary numbers -> this isn't mentioned in the paper

@@ -1,7 +1,7 @@
 import networkx as nx
 import numpy as np
 from networkx.utils import py_random_state
-from scipy.stats import binom
+from random import choices
 
 
 def _random_subset(seq, m, rng):
@@ -80,19 +80,19 @@ def ba_graph(n, m, seed=None):
     return G
 
 
-def paf_graph(n):
+def paf_graph(n, Q):
     """"
     Implementation of the Albert Barabási graph with fitness
     :param n = the total vertices after the network simulation is over
+    :param Q = a vector containing of the probabilities corresponding to each fitness value (ascending-> 1, 2, 3...)
     """
 
     # Start with a single vertex and self-loop on it
     G = nx.MultiGraph()
     G.add_edges_from(zip([0], [0]))
     # Sample n fitness parameters corresponding to the (future) vertices
-    fitnesses = np.random.binomial(10, 0.3, size=n) + 1  # TODO: is this +1 the problem for difference competition?
-    rv = binom(10, 0.3)
-    Q = rv.pmf([i for i in range(11)])
+    # Do this according to a probability distribution Q
+    fitnesses = choices(np.arange(1, len(Q) + 1), weights=Q, k=n)
     # list of scaled degrees acting as prob. distr., 2*fitness value of first vertex (self loop -> deg x2)
     sc_deg = [2 * fitnesses[0]]
     # We start with the target being vertex 0
@@ -103,12 +103,11 @@ def paf_graph(n):
         # Add edges from the source to the the m targets
         G.add_edge(source, target)
         # Increment the sc_deg list for the position of the target and source vertex
-        sc_deg[target] += 1 * fitnesses[target]
-        sc_deg.append(1 * fitnesses[source])
+        sc_deg[target] += fitnesses[target]
+        sc_deg.append(fitnesses[source])
         # Make a new list that transfer sc_deg to a probability distribution
-        sum_sc_deg = sum(sc_deg)
-        prob = np.array(sc_deg) / sum_sc_deg
+        prob = np.array(sc_deg) / sum(sc_deg)
         # Sample m target nodes from the existing vertices with sc_deg as distribution
-        target = np.random.choice(np.arange(len(sc_deg)), p=prob, size=1, replace=False)[0]
+        target = np.random.choice(np.arange(len(sc_deg)), p=prob)
         source += 1
-    return G, fitnesses, Q
+    return G, fitnesses
