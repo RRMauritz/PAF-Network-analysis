@@ -91,8 +91,8 @@ def paf_graph(n, Q):
     G = nx.MultiGraph()
     G.add_edges_from(zip([0], [0]))
     # Sample n fitness parameters corresponding to the (future) vertices
-    # Do this according to a probability distribution Q
-    fitnesses = choices(np.arange(1, len(Q) + 1), weights=Q, k=n)
+    # Do this according to a probability distribution Q = [p1, p2, p3,...]
+    fitnesses = choices(np.arange(1, len(Q) + 1), weights=Q, k=n)  # len(Q) +1 as right boundary not included
     # list of scaled degrees acting as prob. distr., 2*fitness value of first vertex (self loop -> deg x2)
     sc_deg = [2 * fitnesses[0]]
     # We start with the target being vertex 0
