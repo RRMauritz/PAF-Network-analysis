@@ -1,7 +1,8 @@
 import networkx as nx
 import numpy as np
 from networkx.utils import py_random_state
-from random import choices
+from random import choices, seed
+import os.path
 
 
 def _random_subset(seq, m, rng):
@@ -93,6 +94,7 @@ def paf_graph(n, Q):
     # Sample n fitness parameters corresponding to the (future) vertices
     # Do this according to a probability distribution Q = [p1, p2, p3,...]
     fitnesses = choices(np.arange(1, len(Q) + 1), weights=Q, k=n)  # len(Q) +1 as right boundary not included
+
     # list of scaled degrees acting as prob. distr., 2*fitness value of first vertex (self loop -> deg x2)
     sc_deg = [2 * fitnesses[0]]
     # We start with the target being vertex 0
@@ -111,3 +113,13 @@ def paf_graph(n, Q):
         target = np.random.choice(np.arange(len(sc_deg)), p=prob)
         source += 1
     return G, fitnesses
+
+
+def show_PAF(n, Q, graph_name, attr_name):
+    file_loc_graph = os.path.join("Graphs", graph_name)
+    G, fitness = paf_graph(n, Q)
+    nx.write_graphml(G, file_loc_graph)
+    file_loc_attr = os.path.join("Graphs", attr_name)
+
+    a = np.stack(([i for i in range(n)], fitness), axis=1)
+    np.savetxt(file_loc_attr, a, delimiter=",", fmt="%i", header='Node, Fitness')

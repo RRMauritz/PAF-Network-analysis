@@ -51,16 +51,17 @@ def deg_compare_PA_sim(n, m, I):
     """
     jsd_values = np.zeros(I)
     for i in range(I):
+        print(i)
         jsd_values[i] = deg_compare_PA(n, m, False)
     mean_jsd = np.mean(jsd_values)
     std_jsd = np.std(jsd_values)
     return mean_jsd, std_jsd
 
 
-n = 10000
-m = 10
+n = 50
+m = 6
 I = 100
 
-mean, std = deg_compare_PA_sim(n, m, 100)
+mean, std = deg_compare_PA_sim(n, m, I)
 
 print(np.round(mean, 3), np.round(std, 4))
