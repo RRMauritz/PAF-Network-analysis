@@ -1,8 +1,9 @@
 import networkx as nx
 import numpy as np
-from networkx.utils import py_random_state
-from random import choices, seed
 import os.path
+
+from networkx.utils import py_random_state
+from random import choices
 
 
 def _random_subset(seq, m, rng):
@@ -48,7 +49,7 @@ def ba_graph_oi(n, m, seed=None):
             rep_nodes_inbetw = rep_nodes[:]  # make hardcopy
             rep_nodes_inbetw.append(source)
             # Sample a target vertex from the rep_nodes_inbetw list that contains the extra source vertex
-            target = list(_random_subset(rep_nodes_inbetw, 1, seed))[0]  # TODO: check if this can be more efficient
+            target = list(_random_subset(rep_nodes_inbetw, 1, seed))[0]
             # Add an edge between the source and the target
             G.add_edges_from([(source, target)])
             # Add the source and vertex to the rep_nodes list as both their degree has increased by 1
@@ -94,7 +95,6 @@ def paf_graph(n, Q):
     # Sample n fitness parameters corresponding to the (future) vertices
     # Do this according to a probability distribution Q = [p1, p2, p3,...]
     fitnesses = choices(np.arange(1, len(Q) + 1), weights=Q, k=n)  # len(Q) +1 as right boundary not included
-
     # list of scaled degrees acting as prob. distr., 2*fitness value of first vertex (self loop -> deg x2)
     sc_deg = [2 * fitnesses[0]]
     # We start with the target being vertex 0

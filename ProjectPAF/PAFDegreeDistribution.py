@@ -4,84 +4,80 @@ import matplotlib.pyplot as plt
 import networkx as nx
 import numpy as np
 from sympy.solvers import solve
-from sympy import symbols, summation, Array
-from scipy.stats import binom
+from sympy import symbols, summation, Array, Abs
+from scipy.stats import kurtosis
 
 
 def deg_compare_PAF(n, Q, plot=False):
     """
-    Creates a PAF network and computes its degree sequence
+    Creates a PAF network and computes its degree sequence for each fitness-value
     :param n: the number of vertices in the PAF graph
     :param plot: if True, then the degree sequence will be plotted via a bar plot
     """
     G, fitness = paf_graph(n, Q)
-
     degrees = list(dict(G.degree()).values())  # list of degree values for all vertices
     fit_deg = {}
-    for j in range(1, len(Q) + 1):
+    for j in range(1, len(Q) + 1):  # because fitness-value start at 1
+        # For each item in the degree list, store it in this j-list if the corresponding fitness value equals j
         degrees_j = [degrees[k] for k in range(len(degrees)) if fitness[k] == j]
         deg_count_j = Counter(degrees_j)
         deg_k_j = list(deg_count_j.keys())
         deg_v_j = list(deg_count_j.values())
         deg_k_j, deg_v_j = zip(*sorted(zip(deg_k_j, deg_v_j)))
-        deg_v_j = [v / len(degrees_j) for v in
-                   deg_v_j]  # TODO: good that we divide by len(degrees_j) instead of n? Probably not!
-        fit_deg[j - 1] = (deg_k_j, deg_v_j)
-
-    deg_count = Counter(degrees)  # Count each occurrence
-    deg_k = list(deg_count.keys())  # unique degrees (key)
-    deg_v = list(deg_count.values())  # number of occurrences of each unique degree (value)
-
-    deg_k, deg_v = zip(*sorted(zip(deg_k, deg_v)))  # sort the two together based on deg_k ascending
-    deg_v = [v / n for v in deg_v]  # normalize the bars
+        deg_v_j = [v / n for v in deg_v_j]  # TODO: good that we divide by n?
+        fit_deg[j] = (deg_k_j, deg_v_j)  # store it with key = j
 
     # First calculate the nu_sequence
-    Q = Array(Q)
-    l, j = symbols('l,j', real=True)
-    eq = summation(j * Q[j - 1] / (l - j), (j, 1, len(Q)))  # The end term is included in the summation
-    lamb_0 = max(solve(eq - 1, l))
+    Qs = Array(Q)
+    l, j = symbols('l,j')
+    # The end term is included in the summation, the first entry of Q corresponds to j = 1
+    eq = summation(j * Qs[j - 1] / (l - j), (j, 1, len(Q)))
+    lamb_0 = max(np.abs(solve(eq - 1, l)))
 
     nu = [lamb_0 * Q[j - 1] / (lamb_0 - j) for j in range(1, len(Q) + 1)]
-    # Then calculate the eta-sequence
+
+    # Then calculate the eta-sequence, store it in a dict with the fv being the key
     eta = {}
-    for j in range(len(Q)):
-        eta[j] = [nu[j] * (1 / k) * np.product(np.array([l / (l + lamb_0 * (1 / (j + 1))) for l in range(2, k + 1)]))
-                  for k in deg_k]
+    for j in range(1, len(Q) + 1):  # because the fitness-value starts at 1
+        eta[j] = [nu[j - 1] * (1 / k) * np.product(np.array([l / (l + lamb_0 * (1 / j)) for l in range(2, k + 1)]))
+                  for k in fit_deg[j][0]]
+
     # Degree distribution for each fitnessvalue
 
     if plot:
-        ncol = 2
-        nrow = 2
+        ncol = 3
+        nrow = 3
         fig, axs = plt.subplots(nrow, ncol)
         axs = axs.ravel()
         for j in range(1, len(Q) + 1):
-            axs[j - 1].bar(fit_deg[j - 1][0], fit_deg[j - 1][1])
-            axs[j - 1].plot(deg_k, eta[j - 1], 'r')
+            axs[j - 1].bar(fit_deg[j][0], fit_deg[j][1])
+            axs[j - 1].plot(fit_deg[j][0], eta[j], 'r')
             axs[j - 1].set_title('Fitness = %i' % j)
             axs[j - 1].set_xlim([0, 20])
         plt.show()
     return eta
 
 
-def competition_compare_PAF(n, Q, plot=False):
+def competition_compare_PAF(n, Q, lamb_0=None, plot=False):
+    """"
+    Optional to give lamb_0 to the function so that it is not recalculated each time
+    """
     # Create an instance of the PAF graph
     G, fitness = paf_graph(n, Q)
 
     # Compute lamb_0 based on Q => solve equation
-    Q = Array(Q)
-    l, j = symbols('l,j', real=True)
-    eq = summation(j * Q[j - 1] / (l - j), (j, 1, len(Q)))  # The end term is included in the summation
-    lamb_0 = max(solve(eq - 1, l))
-    print("Lambda_0 = ", lamb_0)
+    if lamb_0 is None:
+        Qs = Array(Q)
+        l, j = symbols('l,j')
+        eq = summation(j * Qs[j - 1] / (l - j), (j, 1, len(Q)))  # The end term is included in the summation
+        lamb_0 = max(np.abs(solve(eq - 1, l)))  # TODO: not entirely sure if taking the abs value is valid
 
     # For each fitness value, store the total degree
     degrees = list(dict(G.degree()).values())
-    fit_link = {}
+    fit_link = {el: 0 for el in range(1, len(Q) + 1)}  # for each fitness-value, pre-set it's value to 0
     for i in range(len(degrees)):
-        if fitness[i] in fit_link:
-            fit_link[fitness[i]] += degrees[i]
-        else:
-            fit_link[fitness[i]] = degrees[i]
+        fit_link[fitness[i]] += degrees[i]
+
     # Make a list of the fitness values and the corresponding counts
     link_k = list(fit_link.keys())
     link_v = list(fit_link.values())
@@ -103,17 +99,18 @@ def competition_compare_PAF(n, Q, plot=False):
     return ABS
 
 
-# ---------------------------------------------------------
-rv = binom(5, 0.4)
-Q = rv.pmf([i for i in range(5)])
+def competition_compare_PAF_sim(n, Q, I):
+    # Solve for lamb_0 and give it as argument to competition_compare_PAF
+    # so that we do not have to recalculate it each time
+    Qs = Array(Q)
+    l, j = symbols('l,j', real=True)
+    eq = summation(j * Qs[j - 1] / (l - j), (j, 1, len(Q)))  # The end term is included in the summation
+    lamb_0 = max(solve(eq - 1, l))
 
-# Q = [0.3, 0.2, 0.1, 0.1, 0.1, 0.05, 0.05, 0.025, 0.025, 0.025, 0.025]
-# Q = [0.4, 0.3, 0.2, 0.1]
-# Q = [0.2, 0.4, 0.2, 0.1, 0.1]
-n = 100000
-# eta = deg_compare_PAF(n, Q, plot=True)
+    abs_values = np.zeros(I)
+    for i in range(I):
+        abs_values[i] = competition_compare_PAF(n, Q, lamb_0, False)
+    mean_abs = np.mean(abs_values)
+    std_abs = np.std(abs_values)
+    return mean_abs, std_abs
 
-# show_PAF(n, Q, 'Testgraph.graphml', 'Testattr.csv')
-competition_compare_PAF(n, Q, plot=True)
-# Q = [0.1, 0.3, 0.2, 0.3, 0.1]
-# Q = [0.6, 0.19, 0.21]  # TODO: problems with imaginary numbers -> this isn't mentioned in the paper
