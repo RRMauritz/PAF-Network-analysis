@@ -1,7 +1,7 @@
 import networkx as nx
 import numpy as np
 import os.path
-
+import time
 from networkx.utils import py_random_state
 from random import choices
 
@@ -123,3 +123,6 @@ def show_PAF(n, Q, graph_name, attr_name):
 
     a = np.stack(([i for i in range(n)], fitness), axis=1)
     np.savetxt(file_loc_attr, a, delimiter=",", fmt="%i", header='Node, Fitness')
+
+
+
